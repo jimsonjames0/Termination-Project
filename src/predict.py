@@ -18,19 +18,19 @@ def predict_all_slots(text: str):
         outputs = model(**inputs)
 
     logits_occasion   = outputs["logits_occasion"]
-    probs = logits_occasion.softmax(-1)[0].tolist()
+    # probs = logits_occasion.softmax(-1)[0].tolist()
 
-    for i, p in enumerate(probs):
-        print(cfg.OCCASION_LABELS[i], round(p, 3))
-    # logits_size       = outputs["logits_size"]
-    # logits_due_date = outputs["logits_due_date"]
+    # for i, p in enumerate(probs):
+    #     print(cfg.OCCASION_LABELS[i], round(p, 3))
+    logits_size       = outputs["logits_size"]
+    logits_due_date = outputs["logits_due_date"]
     # logits_flavor = outputs["logits_flavor"]
     # logits_filling = outputs["logits_filling"]
     # logits_icing = outputs["logits_icing"]
 
     occ_id = logits_occasion.argmax(-1).item()
-    # size_id = logits_size.argmax(-1).item()
-    # date_id = logits_due_date.argmax(-1).item()
+    size_id = logits_size.argmax(-1).item()
+    date_id = logits_due_date.argmax(-1).item()
 
     # threshold = 0.65
     # #extracting probabiliities for multi-class slots
@@ -53,8 +53,8 @@ def predict_all_slots(text: str):
     return {
         "Text: ": text,
         "Occasion: ":   cfg.occasion_id2label[occ_id],
-        # "Size: ":       cfg.size_id2label[size_id],
-        # "Due_Date: ": cfg.date_id2label[date_id],
+        "Size: ":       cfg.size_id2label[size_id],
+        "Due_Date: ": cfg.date_id2label[date_id],
         # "Flavor: ": pred_flavor,
         # "Filling: ": pred_filling,
         # "Icing: ": pred_icing,
@@ -62,9 +62,9 @@ def predict_all_slots(text: str):
 
 if __name__ == "__main__":
     examples = [
-        "I need a 10-inch birthday cake for my son",
-        "We want a huge three-tier wedding cake with lots of decor",
-        "Just a simple small 7-inch cake to celebrate graduation"
+        "I need a 10-inch birthday cake for my son next week",
+        "We want a huge three-tier wedding cake with lots of decor for Sunday March 25th",
+        "Just a simple small 7-inch cake to celebrate my graduation"
     ]
     for text in examples:
         print(text, "→", predict_all_slots(text))

@@ -12,8 +12,8 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         #classifier per head
         self.heads = nn.ModuleDict({
             "occasion": nn.Linear(config.hidden_size, len(cfg.OCCASION_LABELS)),
-            # "size": nn.Linear(config.hidden_size, len(cfg.SIZE_LABELS)),
-            # "due_date": nn.Linear(config.hidden_size, len(cfg.DATE_LABELS)),
+            "size": nn.Linear(config.hidden_size, len(cfg.SIZE_LABELS)),
+            "due_date": nn.Linear(config.hidden_size, len(cfg.DATE_LABELS)),
             # "flavor": nn.Linear(config.hidden_size, len(cfg.FLAVOR_LABELS)),
             # "filling": nn.Linear(config.hidden_size, len(cfg.FILLING_LABELS)),
             # "icing": nn.Linear(config.hidden_size, len(cfg.ICING_LABELS)),
@@ -31,8 +31,8 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         token_type_ids=None,
         #ground truth labels for batch
         labels_occasion=None,
-        # labels_size=None,
-        # labels_due_date=None,
+        labels_size=None,
+        labels_due_date=None,
         # labels_flavor=None,
         # labels_filling=None,
         # labels_icing=None,
@@ -50,8 +50,8 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         #Each head predicts logits
         #[batch, len_slot]
         logits_occasion   = self.heads["occasion"](pooled_output)
-        # logits_size       = self.heads["size"](pooled_output)
-        # logits_due_date = self.heads["due_date"](pooled_output)
+        logits_size       = self.heads["size"](pooled_output)
+        logits_due_date = self.heads["due_date"](pooled_output)
         # logits_flavor = self.heads["flavor"](pooled_output)
         # logits_filling = self.heads["filling"](pooled_output)
         # logits_icing = self.heads["icing"](pooled_output)
@@ -61,18 +61,18 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         loss = None
         #Compute loss if labels are provided
         loss_o = None
-        # loss_s = None
-        # loss_d = None
+        loss_s = None
+        loss_d = None
         # loss_fl = None
         # loss_fi = None
         # loss_i = None
 
         if labels_occasion is not None:
             loss_o = self.loss_ce(logits_occasion, labels_occasion)
-        # if labels_size is not None:
-        #     loss_s = self.loss_ce(logits_size, labels_size)
-        # if labels_due_date is not None:
-        #     loss_d = self.loss_ce(logits_due_date, labels_due_date)
+        if labels_size is not None:
+            loss_s = self.loss_ce(logits_size, labels_size)
+        if labels_due_date is not None:
+            loss_d = self.loss_ce(logits_due_date, labels_due_date)
 
         # #Multi-Label Loss
         # if labels_flavor is not None:
@@ -82,26 +82,25 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         # if labels_icing is not None:
         #     loss_i = self.loss_bce(logits_icing, labels_icing.float())
 
-        # losses = []
+        losses = []
 
+        for l in [loss_o, loss_s, loss_d]:
+            if l is not None:
+                losses.append(l)
         # for l in [loss_o, loss_s, loss_d, loss_fl, loss_fi, loss_i]:
         #     if l is not None:
         #         losses.append(l)
-        # if losses:
-        #     loss = sum(losses)
-        # else:
-        #     loss = None
+        if losses:
+            loss = sum(losses)
+        else:
+            loss = None
 
-        if loss_o is not None:
-            loss = loss_o
+        # if loss_o is not None:
+        #     loss = loss_o
 
 
-        return {
-            "loss": loss,
-            "logits_occasion": logits_occasion,
-        #     "logits_size": logits_size,
-        #     "logits_due_date": logits_due_date,
-        #     "logits_flavor": logits_flavor,
+        return (loss, logits_occasion, logits_size, logits_due_date)
+            # "logits_flavor": logits_flavor,
         #     "logits_filling": logits_filling,
         #     "logits_icing": logits_icing,
-        }
+        

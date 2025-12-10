@@ -8,22 +8,43 @@ from src.tokenize import tokenizer, tokenize_and_label
 from src.multiheadBERT import MultiHeadBertForSequenceClassification 
 
 def compute_metrics(p):
-    if isinstance(p.predictions, dict):
-        logits = p.predictions.get('logits_occasion')
-    else:
-        logits = p.predictions
-    
-    if not isinstance(logits, np.ndarray):
-        logits = np.array(logits)
-    # print("Logits :", logits)
-    preds = np.argmax(logits, axis=-1)
-    # print("Preds: ", preds)
-    labels = p.label_ids
-    # print("Labels: ", labels)
-    acc = accuracy_score(labels, preds)
-    f1 = f1_score(labels, preds, average = "macro")
+    # Unpack predictions (from model forward tuple)
+    logits_occasion, logits_size, logits_due_date = p.predictions
 
-    return {"Accuracy: ": acc, "F1_Macro:": f1,}
+    # Unpack labels (in the same order as label_names)
+    labels_occasion, labels_size, labels_due_date = p.label_ids
+
+    # Argmax over class dimension for each head
+    preds_occasion = np.argmax(logits_occasion, axis=-1)
+    preds_size     = np.argmax(logits_size, axis=-1)
+    preds_due_date = np.argmax(logits_due_date, axis=-1)
+
+    # Occasion metrics
+    acc_occ = accuracy_score(labels_occasion, preds_occasion)
+    f1_occ  = f1_score(labels_occasion, preds_occasion, average="macro")
+
+    # Size metrics
+    acc_size = accuracy_score(labels_size, preds_size)
+    f1_size  = f1_score(labels_size, preds_size, average="macro")
+
+    # Due date metrics
+    acc_date = accuracy_score(labels_due_date, preds_due_date)
+    f1_date  = f1_score(labels_due_date, preds_due_date, average="macro")
+
+    # (Optional) overall averages
+    acc_mean = (acc_occ + acc_size + acc_date) / 3.0
+    f1_mean  = (f1_occ + f1_size + f1_date)  / 3.0
+
+    return {
+        "Acc_Occasion": acc_occ,
+        "F1_Macro_Occasion": f1_occ,
+        "Acc_Size": acc_size,
+        "F1_Macro_Size": f1_size,
+        "Acc_DueDate": acc_date,
+        "F1_Macro_DueDate": f1_date,
+        "Acc_Mean": acc_mean,
+        "F1_Mean": f1_mean,
+    }
 
 def train_multi(raw_jsonl: str, output_dir: str):
     #Load raw JSONL dataset
@@ -64,6 +85,7 @@ def train_multi(raw_jsonl: str, output_dir: str):
         save_strategy="epoch",
         logging_strategy ="steps",
         logging_steps=500,
+        label_names = ["labels_occasion", "labels_size", "labels_due_date"],
     )
 
    
@@ -82,4 +104,4 @@ def train_multi(raw_jsonl: str, output_dir: str):
     tokenizer.save_pretrained(output_dir)
 
 if __name__ == "__main__":
-    train_multi("data/seed_slots.jsonl", "models/multihead_bert")
+    train_multi("data/small.jsonl", "models/multihead_bert")

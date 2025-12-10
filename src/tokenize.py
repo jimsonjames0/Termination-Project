@@ -18,8 +18,8 @@ def tokenize_and_label(example):
         max_length=128
     )
     out["labels_occasion"] = cfg.occasion_label2id[example["Occasion"]]
-    # out["labels_size"] = cfg.size_label2id[example["Size"]]
-    # out["labels_due_date"] = cfg.date_label2id[example["Due_Date"]]
+    out["labels_size"] = cfg.size_label2id[example["Size"]]
+    out["labels_due_date"] = cfg.date_label2id[example["Due_Date"]]
 
     # out["labels_flavor"] = multi_label(example["Flavor"], cfg.flavor_label2id, len(cfg.FLAVOR_LABELS),)
 
