@@ -1,0 +1,9 @@
+# Ignore model outputs / checkpoints
+models/
+*.pt
+*.bin
+*.safetensors
+
+# Python cache
+__pycache__/
+*.pyc
