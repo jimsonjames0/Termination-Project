@@ -21,9 +21,9 @@ def tokenize_and_label(example):
     out["labels_size"] = cfg.size_label2id[example["Size"]]
     out["labels_due_date"] = cfg.date_label2id[example["Due_Date"]]
 
-    # out["labels_flavor"] = multi_label(example["Flavor"], cfg.flavor_label2id, len(cfg.FLAVOR_LABELS),)
+    out["labels_flavor"] = multi_label(example["Flavor"], cfg.flavor_label2id, len(cfg.FLAVOR_LABELS),)
 
-    # out["labels_filling"] = multi_label(example["Filling"], cfg.filling_label2id, len(cfg.FILLING_LABELS),)
-    # out["labels_icing"] = multi_label(example["Icing"], cfg.icing_label2id, len(cfg.ICING_LABELS),)
+    out["labels_filling"] = multi_label(example["Filling"], cfg.filling_label2id, len(cfg.FILLING_LABELS),)
+    out["labels_icing"] = multi_label(example["Icing"], cfg.icing_label2id, len(cfg.ICING_LABELS),)
     
     return out

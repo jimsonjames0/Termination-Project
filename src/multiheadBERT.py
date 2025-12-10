@@ -14,9 +14,9 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
             "occasion": nn.Linear(config.hidden_size, len(cfg.OCCASION_LABELS)),
             "size": nn.Linear(config.hidden_size, len(cfg.SIZE_LABELS)),
             "due_date": nn.Linear(config.hidden_size, len(cfg.DATE_LABELS)),
-            # "flavor": nn.Linear(config.hidden_size, len(cfg.FLAVOR_LABELS)),
-            # "filling": nn.Linear(config.hidden_size, len(cfg.FILLING_LABELS)),
-            # "icing": nn.Linear(config.hidden_size, len(cfg.ICING_LABELS)),
+            "flavor": nn.Linear(config.hidden_size, len(cfg.FLAVOR_LABELS)),
+            "filling": nn.Linear(config.hidden_size, len(cfg.FILLING_LABELS)),
+            "icing": nn.Linear(config.hidden_size, len(cfg.ICING_LABELS)),
         })
 
         self.loss_ce = nn.CrossEntropyLoss()
@@ -33,9 +33,9 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         labels_occasion=None,
         labels_size=None,
         labels_due_date=None,
-        # labels_flavor=None,
-        # labels_filling=None,
-        # labels_icing=None,
+        labels_flavor=None,
+        labels_filling=None,
+        labels_icing=None,
         
     ):
         #Run through BERT
@@ -52,9 +52,9 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         logits_occasion   = self.heads["occasion"](pooled_output)
         logits_size       = self.heads["size"](pooled_output)
         logits_due_date = self.heads["due_date"](pooled_output)
-        # logits_flavor = self.heads["flavor"](pooled_output)
-        # logits_filling = self.heads["filling"](pooled_output)
-        # logits_icing = self.heads["icing"](pooled_output)
+        logits_flavor = self.heads["flavor"](pooled_output)
+        logits_filling = self.heads["filling"](pooled_output)
+        logits_icing = self.heads["icing"](pooled_output)
 
 
 
@@ -63,9 +63,9 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         loss_o = None
         loss_s = None
         loss_d = None
-        # loss_fl = None
-        # loss_fi = None
-        # loss_i = None
+        loss_fl = None
+        loss_fi = None
+        loss_i = None
 
         if labels_occasion is not None:
             loss_o = self.loss_ce(logits_occasion, labels_occasion)
@@ -75,21 +75,21 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
             loss_d = self.loss_ce(logits_due_date, labels_due_date)
 
         # #Multi-Label Loss
-        # if labels_flavor is not None:
-        #     loss_fl = self.loss_bce(logits_flavor, labels_flavor.float())
-        # if labels_filling is not None:
-        #     loss_fi = self.loss_bce(logits_filling, labels_filling.float())
-        # if labels_icing is not None:
-        #     loss_i = self.loss_bce(logits_icing, labels_icing.float())
+        if labels_flavor is not None:
+            loss_fl = self.loss_bce(logits_flavor, labels_flavor.float())
+        if labels_filling is not None:
+            loss_fi = self.loss_bce(logits_filling, labels_filling.float())
+        if labels_icing is not None:
+            loss_i = self.loss_bce(logits_icing, labels_icing.float())
 
         losses = []
 
-        for l in [loss_o, loss_s, loss_d]:
-            if l is not None:
-                losses.append(l)
-        # for l in [loss_o, loss_s, loss_d, loss_fl, loss_fi, loss_i]:
+        # for l in [loss_o, loss_s, loss_d]:
         #     if l is not None:
         #         losses.append(l)
+        for l in [loss_o, loss_s, loss_d, loss_fl, loss_fi, loss_i]:
+            if l is not None:
+                losses.append(l)
         if losses:
             loss = sum(losses)
         else:
@@ -99,7 +99,7 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         #     loss = loss_o
 
 
-        return (loss, logits_occasion, logits_size, logits_due_date)
+        return (loss, logits_occasion, logits_size, logits_due_date, logits_flavor, logits_filling, logits_icing)
             # "logits_flavor": logits_flavor,
         #     "logits_filling": logits_filling,
         #     "logits_icing": logits_icing,
