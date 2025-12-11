@@ -1,4 +1,4 @@
-##WalterBot: Multi-Head BERT Slot Extraction##
+## WalterBot: Multi-Head BERT Slot Extraction ##
 
 WalterBot is a cake-ordering assistant that turns messy, natural-language messages into a structured JSON order the bakery can actually bake from.
 
@@ -16,7 +16,7 @@ Becomes something like:
 
 This repo contains the BERT-based slot extraction model that powers that behavior.
 
-##Highlights##
+## Highlights ##
 
 -Single BERT encoder (bert-base-uncased)
 
@@ -28,7 +28,7 @@ This repo contains the BERT-based slot extraction model that powers that behavio
 -Uses class-weighted BCE for rare fillings & icings
 -Trained on augmented ~11K+ examples of realistic cake orders
 
-##Architecture##
+## Architecture ##
 
 Everything lives in src/multiheadBERT.py.
 Encoder: BertModel(config) from Hugging Face.
@@ -78,7 +78,7 @@ The model’s forward returns:
   logits_icing,
 )
 
-##Data Format##
+## Data Format ##
 Training data is in JSONL format (data/*.jsonl), one order per line:
 {
   "Text": "Hi, this is Sophia. I'd like a 7-inch marble cake...",
@@ -101,7 +101,7 @@ Multi-label slots become multi-hot vectors:
    - labels_filling → [num_fillings]
    - labels_icing → [num_icings]
 
-##Training##
+## Training ##
 
 Training is done via Hugging Face’s Trainer in src/trainMulti.py.
 
@@ -113,7 +113,7 @@ Run Training (Local)
 From the project root: python3 -m src.trainMulti
 
 
-##Metrics##
+## Metrics ##
 
 src/trainMulti.py defines compute_metrics(p) to evaluate each head:
 
@@ -154,8 +154,6 @@ python3 -m src.predict
 ##Repo Structure##
 
 Rough layout:
-
-.
 ├── data/
 │   ├── seed_slots.jsonl          # original labeled orders
 │   ├── augmented.jsonl           # synthetic / balanced orders
@@ -176,12 +174,9 @@ Rough layout:
 ├── augmentData.py                # data augmentation / balancing
 └── README.md
 
-🔧 Future Work
+## Future Work ##
 
 Improve Filling vs Icing distinction (they’re very semantically similar).
-
 Per-label threshold tuning instead of one threshold per head.
-
 Add confidence scores & clarification questions to the chat experience.
-
 Integrate this model end-to-end into a production chat UI.
