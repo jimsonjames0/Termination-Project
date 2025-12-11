@@ -22,14 +22,7 @@ def compute_metrics(p):
     ) = p.predictions
 
     # Unpack labels 
-    (
-        labels_occasion,
-        labels_size,
-        labels_due_date,
-        labels_flavor,
-        labels_filling,
-        labels_icing,
-    ) = p.label_ids
+    (labels_occasion, labels_size, labels_due_date,labels_flavor, labels_filling,labels_icing,) = p.label_ids
 
     preds_occasion = np.argmax(logits_occasion, axis=-1)
     preds_size     = np.argmax(logits_size, axis=-1)
@@ -46,8 +39,8 @@ def compute_metrics(p):
 
    
     thr_flavor = 0.6
-    thr_filling = 0.625
-    thr_icing = 0.62
+    thr_filling = 0.655
+    thr_icing = 0.66
 
     probs_flavor  = sigmoid(logits_flavor)
     probs_filling = sigmoid(logits_filling)
@@ -108,11 +101,11 @@ def train_multi(raw_jsonl: str, output_dir: str):
     # print("RAW Example: ", ds[0])
     # print("Tokenized Example: ", data["train"][0])
     
-    
-    config = BertConfig.from_pretrained("bert-base-uncased")
+    # "bert-base-uncased" for evlauation
+    config = BertConfig.from_pretrained("models/multihead_bert_s2")
     model = MultiHeadBertForSequenceClassification.from_pretrained(
-        "bert-base-uncased",
-        # "/content/drive/MyDrive/walters_models/multihead_bert_s2",
+        # "bert-base-uncased",
+        "models/multihead_bert_s2",
         config=config,
     )
 
@@ -143,10 +136,10 @@ def train_multi(raw_jsonl: str, output_dir: str):
         compute_metrics = compute_metrics,
     )
 
-    trainer.train()
+    # trainer.train()
     print("Validation:", trainer.evaluate())
-    trainer.save_model(output_dir)
-    tokenizer.save_pretrained(output_dir)
+    # trainer.save_model(output_dir)
+    # tokenizer.save_pretrained(output_dir)
 
 if __name__ == "__main__":
     train_multi("data/seed_slots.jsonl", "/content/drive/MyDrive/walters_models/multihead_bert_s2")

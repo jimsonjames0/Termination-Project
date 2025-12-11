@@ -5,7 +5,7 @@ from src.multiheadBERT import MultiHeadBertForSequenceClassification
 import src.config as cfg
 
 # Load tokenizer + model from the directory you saved in training
-MODEL_DIR = "/content/drive/MyDrive/walters_models/multihead_bert_s2"
+MODEL_DIR = "models/multihead_bert_s2"
 
 tokenizer = BertTokenizerFast.from_pretrained(MODEL_DIR)
 config = BertConfig.from_pretrained(MODEL_DIR)
@@ -23,9 +23,9 @@ def predict_all_slots(text: str):
     size_id = logits_size.argmax(-1).item()
     date_id = logits_due_date.argmax(-1).item()
 
-    thr_flavor = 0.5
-    thr_filling = 0.5
-    thr_icing = 0.5
+    thr_flavor = 0.6
+    thr_filling = 0.655
+    thr_icing = 0.66
     #extracting probabiliities for multi-class slots
     probs_flavor = logits_flavor.sigmoid()[0]
     
@@ -55,9 +55,9 @@ def predict_all_slots(text: str):
 
 if __name__ == "__main__":
     examples = [
-        "I need a 10-inch birthday cake for my son next week",
-        "We want a huge three-tier wedding cake with lots of decor for Sunday March 25th",
-        "Just a simple small 7-inch cake to celebrate my graduation"
+        "I need a 10-inch marble and strawberry birthday cake with almond buttercream filling for my son next week",
+        "We want a huge three-tier wedding cake thats carrot flavored with lots of decor for Sunday March 25th",
+        "Just a simple small vanilla and pumpkin 7-inch cake to celebrate my graduation"
     ]
     for text in examples:
         print(text, "→", predict_all_slots(text))

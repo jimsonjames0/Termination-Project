@@ -1,40 +1,43 @@
-import json 
-def read_json(file_path):
-    data = []
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            ltext , lsize = [], []
-            for i, x in enumerate(file, 1):
-                #stripping whitespaces from line
-                line = x.strip()
-                
-                
-                #line is empty
-                if not line:
-                    continue
+from collections import Counter
+from datasets import load_dataset
 
-                try:
-                    s = json.loads(line)
+ds = load_dataset("json", data_files="data/seed_slots.jsonl", split="train")
+counts = Counter(ex["Occasion"] for ex in ds)
+print(counts)
 
-                    text = s.get("Text", "N/A")
-                    size = s.get("Size", "N/A")
 
-                    duo = (text, size)
-                    data.append(duo)
+import itertools
+def count_multi_labels(dataset_path: str):
+    # Load the entire dataset
+    ds = load_dataset("json", data_files=dataset_path, split="train")
 
-                    #data = [text,size]
-                    #print(f"Text Line {i}: {text} , size: {size}")
+    # flatten the list of lists into a single list of all labels
+    all_flavors = list(itertools.chain.from_iterable(ex["Flavor"] for ex in ds))
+    all_fillings = list(itertools.chain.from_iterable(ex["Filling"] for ex in ds))
+    all_icings = list(itertools.chain.from_iterable(ex["Icing"] for ex in ds))
 
-                except Exception as e:
-                    print("Error decoding line")
-        
-        return data
-    except json.JSONDecodeError as e:
-        print(f"Error decoding file: {file_path}")
+    # frequency of each unique label
+    flavor_counts = Counter(all_flavors)
+    filling_counts = Counter(all_fillings)
+    icing_counts = Counter(all_icings)
 
-def main():
-    parsed= read_json("/mnt/c/Users/jimso/MyCode/Termination Project/data/seed_slots.jsonl")
-    for list in parsed:
-            print(list)
+    total_examples = len(ds)
+    print(f"Total examples in dataset: {total_examples}\n")
+
+    print("--- Flavor Counts ---")
+    for label, count in flavor_counts.most_common():
+        prevalence = (count / total_examples) * 100
+        print(f"  {label}: {count} occurrences ({prevalence:.2f}%)")
+
+    print("\n--- Filling Counts ---")
+    for label, count in filling_counts.most_common():
+        prevalence = (count / total_examples) * 100
+        print(f"  {label}: {count} occurrences ({prevalence:.2f}%)")
+
+    print("\n--- Icing Counts ---")
+    for label, count in icing_counts.most_common():
+        prevalence = (count / total_examples) * 100
+        print(f"  {label}: {count} occurrences ({prevalence:.2f}%)")
+
 if __name__ == "__main__":
-    main()
+    count_multi_labels("data/seed_slots.jsonl")
