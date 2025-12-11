@@ -101,11 +101,11 @@ def train_multi(raw_jsonl: str, output_dir: str):
     # print("RAW Example: ", ds[0])
     # print("Tokenized Example: ", data["train"][0])
     
-    # "bert-base-uncased" for evlauation
-    config = BertConfig.from_pretrained("models/multihead_bert_s2")
+    # "models/multihead_bert_s2" for evlauation
+    config = BertConfig.from_pretrained("bert-base-uncased")
     model = MultiHeadBertForSequenceClassification.from_pretrained(
-        # "bert-base-uncased",
-        "models/multihead_bert_s2",
+        "bert-base-uncased",
+        #"models/multihead_bert_s2",
         config=config,
     )
 
@@ -136,10 +136,11 @@ def train_multi(raw_jsonl: str, output_dir: str):
         compute_metrics = compute_metrics,
     )
 
-    # trainer.train()
+    trainer.train()
     print("Validation:", trainer.evaluate())
-    # trainer.save_model(output_dir)
-    # tokenizer.save_pretrained(output_dir)
+    trainer.save_model(output_dir)
+    tokenizer.save_pretrained(output_dir)
 
 if __name__ == "__main__":
-    train_multi("data/seed_slots.jsonl", "/content/drive/MyDrive/walters_models/multihead_bert_s2")
+    train_multi("data/seed_slots.jsonl", "models/multihead_bert_s2")
+
