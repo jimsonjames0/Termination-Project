@@ -180,3 +180,11 @@ Improve Filling vs Icing distinction (they’re very semantically similar).
 Per-label threshold tuning instead of one threshold per head.
 Add confidence scores & clarification questions to the chat experience.
 Integrate this model end-to-end into a production chat UI.
+
+## Note ##
+The `models/` directory is not included in this repo (it’s git-ignored to avoid pushing large files).
+To run inference, either:
+  - Train the model locally with `python3 -m src.trainMulti`, which will create `models/multihead_bert_s2/`, or  
+  - Drop your own fine-tuned checkpoint into `models/multihead_bert_s2/` with the usual Hugging Face files
+    (`config.json`, `tokenizer_config.json`, `vocab.txt`, `model.safetensors` / `pytorch_model.bin`, etc.).
+
