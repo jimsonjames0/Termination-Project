@@ -131,17 +131,17 @@ On a large augmented dataset (~11K orders):
 Occasion Accuracy ≈ 99.8–99.9%
 F1 (macro) ≈ 0.998+
 
-SizeAccuracy ≈ 99.7–99.8%
+Size Accuracy ≈ 99.7–99.8%
 F1 (macro) ≈ 0.997+
 
-Due_DateAccuracy ≈ 99.9%
+Due_Date Accuracy ≈ 99.9%
 F1 (macro) ≈ 0.999+
 
-Flavor (multi-label) F1 (macro) ≈ 0.97–0.98
+Flavor F1 ≈ 0.97–0.98
 
-Icing (multi-label) F1 (macro) ≈ ~0.74–0.75
+Icing F1 ≈ ~0.74–0.75
 
-Filling (multi-label) F1 (macro) ≈ ~0.53–0.55
+Filling F1 ≈ ~0.53–0.55
 
 Flavor is essentially “solved”; Filling and Icing are harder because real customer language blurs the line between flavor / filling / icing.
 
@@ -152,8 +152,7 @@ Run: python3 -m src.predict
 
 ## Repo Structure ##
 
-Rough layout:
-
+```text
 .
 ├── data/
 │   ├── seed_slots.jsonl          # original labeled orders
@@ -174,6 +173,7 @@ Rough layout:
 │   └── ...
 ├── augmentData.py                # data augmentation / balancing
 └── README.md
+```
 
 ## Future Work ##
 
