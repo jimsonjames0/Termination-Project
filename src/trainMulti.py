@@ -7,44 +7,88 @@ import src.config as cfg
 from src.tokenize import tokenizer, tokenize_and_label
 from src.multiheadBERT import MultiHeadBertForSequenceClassification 
 
-# def compute_metrics(p):
-#     # Unpack predictions (from model forward tuple)
-#     logits_occasion, logits_size, logits_due_date = p.predictions
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
 
-#     # Unpack labels (in the same order as label_names)
-#     labels_occasion, labels_size, labels_due_date = p.label_ids
+def compute_metrics(p):
+    # Unpack predictions
+    (
+        logits_occasion,
+        logits_size,
+        logits_due_date,
+        logits_flavor,
+        logits_filling,
+        logits_icing,
+    ) = p.predictions
 
-#     # Argmax over class dimension for each head
-#     preds_occasion = np.argmax(logits_occasion, axis=-1)
-#     preds_size     = np.argmax(logits_size, axis=-1)
-#     preds_due_date = np.argmax(logits_due_date, axis=-1)
+    # Unpack labels 
+    (
+        labels_occasion,
+        labels_size,
+        labels_due_date,
+        labels_flavor,
+        labels_filling,
+        labels_icing,
+    ) = p.label_ids
 
-#     # Occasion metrics
-#     acc_occ = accuracy_score(labels_occasion, preds_occasion)
-#     f1_occ  = f1_score(labels_occasion, preds_occasion, average="macro")
+    preds_occasion = np.argmax(logits_occasion, axis=-1)
+    preds_size     = np.argmax(logits_size, axis=-1)
+    preds_due_date = np.argmax(logits_due_date, axis=-1)
 
-#     # Size metrics
-#     acc_size = accuracy_score(labels_size, preds_size)
-#     f1_size  = f1_score(labels_size, preds_size, average="macro")
+    acc_occ = accuracy_score(labels_occasion, preds_occasion)
+    f1_occ  = f1_score(labels_occasion, preds_occasion, average="macro")
 
-#     # Due date metrics
-#     acc_date = accuracy_score(labels_due_date, preds_due_date)
-#     f1_date  = f1_score(labels_due_date, preds_due_date, average="macro")
+    acc_size = accuracy_score(labels_size, preds_size)
+    f1_size  = f1_score(labels_size, preds_size, average="macro")
 
-#    #overall accuracy and 
-#     acc_mean = (acc_occ + acc_size + acc_date) / 3.0
-#     f1_mean  = (f1_occ + f1_size + f1_date)  / 3.0
+    acc_date = accuracy_score(labels_due_date, preds_due_date)
+    f1_date  = f1_score(labels_due_date, preds_due_date, average="macro")
 
-#     return {
-#         "Acc_Occasion": acc_occ,
-#         "F1_Macro_Occasion": f1_occ,
-#         "Acc_Size": acc_size,
-#         "F1_Macro_Size": f1_size,
-#         "Acc_DueDate": acc_date,
-#         "F1_Macro_DueDate": f1_date,
-#         "Acc_Mean": acc_mean,
-#         "F1_Mean": f1_mean,
-#     }
+   
+    thr_flavor = 0.6
+    thr_filling = 0.625
+    thr_icing = 0.62
+
+    probs_flavor  = sigmoid(logits_flavor)
+    probs_filling = sigmoid(logits_filling)
+    probs_icing   = sigmoid(logits_icing)
+
+    preds_flavor  = (probs_flavor  > thr_flavor).astype(int)
+    preds_filling = (probs_filling > thr_filling).astype(int)
+    preds_icing   = (probs_icing   > thr_icing).astype(int)
+
+    print("Flavor label mean:", labels_flavor.mean(), "pred mean:", preds_flavor.mean())
+    print("Filling label mean:", labels_filling.mean(), "pred mean:", preds_filling.mean())
+    print("Icing label mean:", labels_icing.mean(), "pred mean:", preds_icing.mean())
+
+    # labels_flavor/filling/icing are already 0/1 multi-hot matrices
+    f1_flavor  = f1_score(labels_flavor,  preds_flavor,  average="macro", zero_division=0)
+    f1_filling = f1_score(labels_filling, preds_filling, average="macro", zero_division=0)
+    f1_icing   = f1_score(labels_icing,   preds_icing,   average="macro", zero_division=0)
+
+    # overall averages (optional)
+    acc_mean = (acc_occ + acc_size + acc_date) / 3.0
+    f1_mean_single = (f1_occ + f1_size + f1_date) / 3.0
+    f1_mean_multi  = (f1_flavor + f1_filling + f1_icing) / 3.0
+
+    return {
+        "Acc_Occasion": acc_occ,
+        "F1_Occasion":  f1_occ,
+
+        "Acc_Size":     acc_size,
+        "F1_Size":      f1_size,
+
+        "Acc_DueDate":  acc_date,
+        "F1_DueDate":   f1_date,
+
+        "F1_Flavor":    f1_flavor,
+        "F1_Filling":   f1_filling,
+        "F1_Icing":     f1_icing,
+
+        "Acc_Mean_Single": acc_mean,
+        "F1_Mean_Single":  f1_mean_single,
+        "F1_Mean_Multi":   f1_mean_multi,
+    }
 
 def train_multi(raw_jsonl: str, output_dir: str):
     #Load raw JSONL dataset
@@ -68,24 +112,25 @@ def train_multi(raw_jsonl: str, output_dir: str):
     config = BertConfig.from_pretrained("bert-base-uncased")
     model = MultiHeadBertForSequenceClassification.from_pretrained(
         "bert-base-uncased",
+        # "/content/drive/MyDrive/walters_models/multihead_bert_s2",
         config=config,
     )
 
     # print(model)
     args = TrainingArguments(
         output_dir=output_dir,
-        per_device_train_batch_size=2,#how many text inputs are process in parallel in training phase
-        gradient_accumulation_steps = 4,
-        per_device_eval_batch_size=2,
+        per_device_train_batch_size=16,#how many text inputs are process in parallel in training phase
+        #gradient_accumulation_steps = 4,
+        per_device_eval_batch_size=16,
         learning_rate=3e-5, # step size to adjust model weights
-        num_train_epochs=8, # num of full passes training will make over entire dataset
+        num_train_epochs=15, # num of full passes training will make over entire dataset
         do_train=True,
         do_eval=True,
         eval_strategy="epoch",
         save_strategy="epoch",
         logging_strategy ="steps",
         logging_steps=500,
-        # label_names = ["labels_occasion", "labels_size", "labels_due_date"],
+        label_names = ["labels_occasion", "labels_size", "labels_due_date", "labels_flavor", "labels_filling", "labels_icing"],
     )
 
    
@@ -95,7 +140,7 @@ def train_multi(raw_jsonl: str, output_dir: str):
         train_dataset=data["train"],
         eval_dataset=data["validation"],
         tokenizer=tokenizer,
-        # compute_metrics = compute_metrics,
+        compute_metrics = compute_metrics,
     )
 
     trainer.train()
@@ -104,4 +149,4 @@ def train_multi(raw_jsonl: str, output_dir: str):
     tokenizer.save_pretrained(output_dir)
 
 if __name__ == "__main__":
-    train_multi("data/small.jsonl", "models/multihead_bert")
+    train_multi("data/seed_slots.jsonl", "/content/drive/MyDrive/walters_models/multihead_bert_s2")

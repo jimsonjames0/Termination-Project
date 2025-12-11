@@ -20,7 +20,15 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         })
 
         self.loss_ce = nn.CrossEntropyLoss()
-        #for filling, flavor, icing slots
+        # #for filling, flavor, icing slots
+        # flavor_weights = torch.tensor([7.0] * len(cfg.FLAVOR_LABELS))
+        # filling_weights = torch.tensor([15.0] * len(cfg.FILLING_LABELS))
+        # icing_weights = torch.tensor([12.0] * len(cfg.ICING_LABELS))
+
+        # self.loss_bce_flavor = nn.BCEWithLogitsLoss(pos_weight=flavor_weights)
+        # self.loss_bce_filling = nn.BCEWithLogitsLoss(pos_weight=filling_weights)
+        # self.loss_bce_icing = nn.BCEWithLogitsLoss(pos_weight=icing_weights)
+
         self.loss_bce = nn.BCEWithLogitsLoss()
         self.init_weights()
 
@@ -74,13 +82,19 @@ class MultiHeadBertForSequenceClassification(BertPreTrainedModel):
         if labels_due_date is not None:
             loss_d = self.loss_ce(logits_due_date, labels_due_date)
 
+        
         # #Multi-Label Loss
+        bce_weight = 1.0
         if labels_flavor is not None:
-            loss_fl = self.loss_bce(logits_flavor, labels_flavor.float())
+            loss_fl = (bce_weight * self.loss_bce(logits_flavor, labels_flavor.float()))
+            # loss_fl = self.loss_bce_flavor(logits_flavor, labels_flavor.float())
         if labels_filling is not None:
-            loss_fi = self.loss_bce(logits_filling, labels_filling.float())
+            loss_fi = (bce_weight * self.loss_bce(logits_filling, labels_filling.float()))
+            # loss_fi = self.loss_bce_filling(logits_filling, labels_filling.float())
+
         if labels_icing is not None:
-            loss_i = self.loss_bce(logits_icing, labels_icing.float())
+            loss_i = (bce_weight * self.loss_bce(logits_icing, labels_icing.float()))
+        #   loss_i = self.loss_bce_icing(logits_icing, labels_icing.float())
 
         losses = []
 
