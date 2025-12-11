@@ -146,14 +146,15 @@ Filling (multi-label) F1 (macro) ≈ ~0.53–0.55
 Flavor is essentially “solved”; Filling and Icing are harder because real customer language blurs the line between flavor / filling / icing.
 
 ## Inference ##
-Inference happens in src/predict.py (or src/predict_multi.py).
-Run:
+Inference happens in src/predict.py .
 
-python3 -m src.predict
+Run: python3 -m src.predict
 
-##Repo Structure##
+## Repo Structure ##
 
 Rough layout:
+
+.
 ├── data/
 │   ├── seed_slots.jsonl          # original labeled orders
 │   ├── augmented.jsonl           # synthetic / balanced orders
